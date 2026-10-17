@@ -25,9 +25,10 @@ A ResNet-18 pretrained on ImageNet, fine-tuned to recognise 6 kinds of natural a
 ### Most instructive error
 A stone cottage in a green valley, labelled *buildings*, was predicted as *mountain* (0.71). The landscape dominates the photo, so the label is arguably ambiguous, and the model's error is understandable.
 
-### Files
-- `week-5-transfer-learning.ipynb`: full notebook with outputs and written analysis
-- `resnet18_intel.pt`: trained weights (44.8 MB)
-
 ## Week 6 Proposal
-**Problem:** classify plant leaf photos into healthy or specific disease categories. **Who benefits:** farmers and agricultural extension workers, who can spot crop disease early with only a phone photo. **Dataset:** PlantVillage on Kaggle (link: [add exact Kaggle URL]), license: [add license shown on the dataset page]. **Size:** [N] classes and about [N] images, with several hundred labelled images per class. I will reuse this week's pipeline: ResNet-18, augmentation on training data only, feature extraction, then fine-tuning.
+
+**Problem:** identify whether a plant leaf is healthy or which disease it has, from a single photo.
+**Who benefits:** farmers and agricultural advisers, who could catch crop disease early using only a phone camera.
+**Dataset:** [New Plant Diseases Dataset](https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset) by Samir Bhattarai on Kaggle, license: Data files © Original Authors (an offline-augmented version of PlantVillage).
+**Size:** 38 classes and about 87,000 labelled images, far more than the few hundred per class the lab requires.
+**Method:** the same pipeline as this week: ResNet-18, augmentation on the training data only, feature extraction, then fine-tuning.
