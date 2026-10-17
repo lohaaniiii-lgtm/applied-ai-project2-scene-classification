@@ -25,12 +25,10 @@ A ResNet-18 pretrained on ImageNet, fine-tuned to recognise 6 kinds of natural a
 ### Most instructive error
 A stone cottage in a green valley, labelled *buildings*, was predicted as *mountain* (0.71). The landscape dominates the photo, so the label is arguably ambiguous, and the model's error is understandable.
 
-## Week 6 Proposal
+## Week 6 Proposal: Household Waste Classification
 
-## Week 6 Proposal
-
-**Problem:** classify a photo of a waste item into one of 12 categories (paper, cardboard, biological waste, metal, plastic, green glass, brown glass, white glass, clothing, shoes, batteries, general trash).
-**Who benefits:** municipal waste teams, recycling collectors and universities or housing societies in Pakistani cities, where mixed waste makes recycling hard. A model like this could help sort waste correctly at the source and support recycling.
-**Dataset:** [Garbage Classification](https://www.kaggle.com/datasets/mostafaabla/garbage-classification) on Kaggle (license: see the dataset page).
-**Size:** 12 classes and about 15,000 labelled images (15,150), far more than the few hundred per class the lab requires.
-**Method:** the same pipeline as this week: ResNet-18, augmentation on the training data only, feature extraction, then fine-tuning. I will also test the model on photos of waste items around me, such as bottles, cans, paper and batteries, to see how it copes with real backgrounds.
+**Problem:** classify a photo of a waste item into one of 12 household garbage categories (paper, cardboard, biological, metal, plastic, green glass, brown glass, white glass, clothes, shoes, batteries and trash).
+**Who benefits:** municipal waste teams, recycling collectors and housing societies or universities in Pakistani cities, where mixed waste makes recycling difficult. Sorting waste correctly at the source would make recycling easier and cut landfill waste.
+**Dataset:** [Garbage Classification (12 classes)](https://www.kaggle.com/datasets/mostafaabla/garbage-classification) by Mostafa Mohamed on Kaggle, license: Open Database License (ODbL).
+**Size:** 12 classes and 15,150 images, an average of about 1,260 per class, well above the few hundred per class the lab requires.
+**Method:** the same pipeline as this week: ResNet-18, augmentation on the training data only, feature extraction, then fine-tuning. The images were mostly collected by web scraping, so I will also test the model on photos of waste around me to see how well it handles real backgrounds.
