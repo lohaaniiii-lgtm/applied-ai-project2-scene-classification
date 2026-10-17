@@ -27,8 +27,10 @@ A stone cottage in a green valley, labelled *buildings*, was predicted as *mount
 
 ## Week 6 Proposal
 
-**Problem:** identify whether a plant leaf is healthy or which disease it has, from a single photo.
-**Who benefits:** farmers and agricultural advisers, who could catch crop disease early using only a phone camera.
-**Dataset:** [New Plant Diseases Dataset](https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset) by Samir Bhattarai on Kaggle, license: Data files © Original Authors (an offline-augmented version of PlantVillage).
-**Size:** 38 classes and about 87,000 labelled images, far more than the few hundred per class the lab requires.
-**Method:** the same pipeline as this week: ResNet-18, augmentation on the training data only, feature extraction, then fine-tuning.
+## Week 6 Proposal
+
+**Problem:** classify a photo of a waste item into one of 12 categories (paper, cardboard, biological waste, metal, plastic, green glass, brown glass, white glass, clothing, shoes, batteries, general trash).
+**Who benefits:** municipal waste teams, recycling collectors and universities or housing societies in Pakistani cities, where mixed waste makes recycling hard. A model like this could help sort waste correctly at the source and support recycling.
+**Dataset:** [Garbage Classification](https://www.kaggle.com/datasets/mostafaabla/garbage-classification) on Kaggle (license: see the dataset page).
+**Size:** 12 classes and about 15,000 labelled images (15,150), far more than the few hundred per class the lab requires.
+**Method:** the same pipeline as this week: ResNet-18, augmentation on the training data only, feature extraction, then fine-tuning. I will also test the model on photos of waste items around me, such as bottles, cans, paper and batteries, to see how it copes with real backgrounds.
