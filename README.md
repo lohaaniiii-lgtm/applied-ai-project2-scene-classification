@@ -25,10 +25,39 @@ A ResNet-18 pretrained on ImageNet, fine-tuned to recognise 6 kinds of natural a
 ### Most instructive error
 A stone cottage in a green valley, labelled *buildings*, was predicted as *mountain* (0.71). The landscape dominates the photo, so the label is arguably ambiguous, and the model's error is understandable.
 
-## Week 6 Proposal: Household Waste Classification
+---
 
-**Problem:** classify a photo of a waste item into one of 12 household garbage categories (paper, cardboard, biological, metal, plastic, green glass, brown glass, white glass, clothes, shoes, batteries and trash).
-**Who benefits:** municipal waste teams, recycling collectors and housing societies or universities in Pakistani cities, where mixed waste makes recycling difficult. Sorting waste correctly at the source would make recycling easier and cut landfill waste.
-**Dataset:** [Garbage Classification (12 classes)](https://www.kaggle.com/datasets/mostafaabla/garbage-classification) by Mostafa Mohamed on Kaggle, license: Open Database License (ODbL).
-**Size:** 12 classes and 15,150 images, an average of about 1,260 per class, well above the few hundred per class the lab requires.
-**Method:** the same pipeline as this week: ResNet-18, augmentation on the training data only, feature extraction, then fine-tuning. The images were mostly collected by web scraping, so I will also test the model on photos of waste around me to see how well it handles real backgrounds.
+## Project 2, Week 6: Recycling Waste Sorting (12-Class Garbage Classification)
+
+A ResNet-18 fine-tuned to sort a photo of a waste item into one of 12 household garbage classes: **battery, biological, brown-glass, cardboard, clothes, green-glass, metal, paper, plastic, shoes, trash, white-glass**.
+
+**Who benefits:** municipal waste teams, recycling collectors and housing societies or universities in Pakistani cities, where mixed waste makes recycling difficult. **Why it matters:** a wrongly sorted item contaminates a whole recycling stream (for example glass or a battery in the wrong bin).
+
+### Datasheet
+| | |
+|---|---|
+| **Dataset** | [Garbage Classification (12 classes)](https://www.kaggle.com/datasets/mostafaabla/garbage-classification) by Mostafa Mohamed, Kaggle, license ODbL |
+| **Size** | 15,515 images, 12 classes |
+| **Source and labels** | images mostly collected by web scraping; [add who labelled it, from the dataset page] |
+| **Imbalance** | ratio 8.8 (clothes 5,325 vs brown-glass 607) |
+| **Audit** | 37 exact duplicate files, 3 sets with conflicting labels, 39 near-duplicate pairs; duplicates handled |
+| **Split** | no test folder, so I made a grouped train/val/test split by near-duplicate cluster; 0 shared groups; test set 2,158 images |
+
+### Model card
+| | |
+|---|---|
+| **Model** | ResNet-18 pretrained on ImageNet, two-phase training (new head first, then fine-tuning) |
+| **Imbalance handling** | class-weighted loss, weights N / (K × n_c) |
+| **Test results (used once)** | macro-F1 **0.928**, accuracy **0.949** |
+| **Weakest class** | white-glass (recall 0.792, F1 0.875); 22 of 106 missed, mostly as metal, plastic and brown-glass |
+| **Grad-CAM shortcut check** | 6 images (clothes, shoes, paper, white-glass, plastic, metal): heat stays on the object, no background shortcut found. Only one image per class was checked, so this is not a full clearance. |
+| **Binary metrics** | not used (12 classes); I analysed per-class recall instead |
+
+### Limitations
+Mostly web-scraped photos with one object on a simple background. Not tested on real conveyor-belt images or on dirty, crushed or wet items. It should not be used as an automatic sorter without human checking.
+
+### Responsibility Questions
+1. **Who could be harmed and how?** Plant workers and the recycling stream. Wrongly sorted glass, plastic or metal contaminates a batch. A missed battery can be a fire hazard.
+2. **Where was the model not validated?** Real plant conditions: dirty, crushed, wet or overlapping items, bad lighting, and objects outside the 12 classes. It was not tested on other datasets.
+3. **What is the human role?** A person checks low-confidence predictions and the weak classes (white-glass, metal, plastic), and removes hazardous items such as batteries by hand.
+4. **What evidence would change my conclusions?** A big macro-F1 drop after masking the background, a much lower score on photos of waste around me or from a real sorting line, or Grad-CAM on more images showing heat on the background.
