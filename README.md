@@ -61,3 +61,53 @@ Mostly web-scraped photos with one object on a simple background. Not tested on 
 2. **Where was the model not validated?** Real plant conditions: dirty, crushed, wet or overlapping items, bad lighting, and objects outside the 12 classes. It was not tested on other datasets.
 3. **What is the human role?** A person checks low-confidence predictions and the weak classes (white-glass, metal, plastic), and removes hazardous items such as batteries by hand.
 4. **What evidence would change my conclusions?** A big macro-F1 drop after masking the background, a much lower score on photos of waste around me or from a real sorting line, or Grad-CAM on more images showing heat on the background.
+
+
+# Project 2, Week 7: Text and Multimodal AI
+
+My Week 6 recycling model learned to **read**. This week I built and **measured** a text classifier, an entity extractor, tested regex fields and an OCR repair step, then combined the image model with a text note into **one masked, explainable JSON record**. Every component has a number, not just a claim.
+
+## Results at a glance
+| Component | What I built | Measured result |
+|---|---|---|
+| **Text classifier** | SMS Spam Collection, **5,572** texts, word vs character n-grams | macro-F1 **0.974** (word) vs **0.982** (char) |
+| **Spam precision / recall** | same test set (149 spam) | word **0.979 / 0.933**, char **0.986 / 0.953** |
+| **Top features** | read from the word model | spam: *call, txt, free, text, reply, claim*; ham: *my, me, ok, can*. Shortcuts: `uk` and `gt`/`lt` (HTML leftovers) |
+| **NER, lab sentences** | spaCy `en_core_web_sm` vs gold set (16 entities) | F1 **0.467** → **0.812** with an entity ruler |
+| **NER, my recycling sentences** | rules from sentences 1-5, scored on 6-10 | held-out F1 **0.400** → **0.593** |
+| **Regex fields** | 6 lab patterns + my own: weight, plate, batch | **5 negative tests** passed (3 of my own) |
+| **OCR repair** | CER and context rules | lab pairs **0.062 / 0.059 / 0.143** → **0.000**; clean invoice **0.000** |
+| **Pipeline** | Week 6 ResNet-18 + text evidence | battery image P = **0.92** + 5 urgent terms → **REFER** |
+| **Privacy** | CNIC, phone and email masked first | leak check returned **`[]`** |
+
+## What I found
+- **The character model won, but both text models missed Roman Urdu spam.** A normal Roman Urdu message with the words "free" and "call" scored **0.86 spam** with the word model and **0.32** with the character model.
+- **Shortcuts hide in top features.** `uk` reflects where the data was collected, and `gt`/`lt` are HTML codes, not spam language.
+- **Rules fix formats, not names.** spaCy tagged a Pakistani date as a place and a phone number as a date. An entity ruler fixed these, but on unseen sentences it found only **8 of 15** entities, so names need a model trained on my own data.
+- **A regex that matched too much.** Without word boundaries my plate pattern returned `TCH-2026` from inside "BATCH". Adding `\b` fixed it.
+- **When image and note disagree, the system still refers the case.** For a plastic photo with a note about a leaking battery, P(battery) was **0.009**, yet the note alone produced **REFER**. I recommend adding an explicit "image and note disagree" reason.
+
+## Example record (masked)
+The note contained a phone number and a CNIC, which never reach the record. Other image classes are cut for space.
+
+```json
+{
+  "image": "battery1.jpg",
+  "image_probabilities": {"battery": 0.919, "metal": 0.074, "brown-glass": 0.006},
+  "note_masked": "Collected from Hanzala Traders in Rawalpindi on 05/11/2026. Old batteries, one swollen and leaking acid. Contact [PHONE], CNIC [CNIC].",
+  "text_evidence": {
+    "entities": [["Hanzala Traders", "ORG"], ["one", "CARDINAL"], ["CNIC", "ORG"], ["CNIC", "ORG"]],
+    "fields": {"date": ["05/11/2026"]},
+    "urgent_terms": ["batteries", "leak", "leaking", "acid", "swollen"]
+  },
+  "decision": "REFER",
+  "reasons": ["image model: P(battery) = 0.92", "note mentions: batteries, leak, leaking, acid, swollen"],
+  "disclaimer": "Decision support only; a qualified human decides."
+}
+```
+
+## Privacy
+Personal identifiers are masked **before** any entity or field extraction, because extracting from the original note would copy the identifier into the record. I checked the final JSON for the phone digits and found none.
+
+## Limitations
+My held-out NER set has only **15 entities**, so one entity moves F1 by several points. The case records use **two examples** with notes I wrote, the OCR test image is **clean and synthetic**, and I did not check whether the example photos were in my Week 6 test set. This is **decision support only**, and a person decides.
