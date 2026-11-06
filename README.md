@@ -111,3 +111,113 @@ Personal identifiers are masked **before** any entity or field extraction, becau
 
 ## Limitations
 My held-out NER set has only **15 entities**, so one entity moves F1 by several points. The case records use **two examples** with notes I wrote, the OCR test image is **clean and synthetic**, and I did not check whether the example photos were in my Week 6 test set. This is **decision support only**, and a person decides.
+
+
+# Project 2: Recycling Waste Sorting API (Vision + Text)
+
+**Student:** Muhammad Luqman Khan | **Course:** Introduction to Applied AI (Lab 8)
+
+A FastAPI web service that serves my Week 6 image model (ResNet-18, 12 waste classes, macro-F1 0.928)
+and my Week 7 text evidence (PII masking, field extraction, urgent-word detection).
+The positive class that must not be missed is **battery** (hazardous waste).
+
+## Files
+| File | Purpose |
+|---|---|
+| `app.py` | `/health`, `/predict`, `/analyze` endpoints |
+| `test_api.py` | 8 automated tests |
+| `bench.py` | latency benchmark |
+| `week6_model.pt` | trained Week 6 checkpoint (not committed if large) |
+
+## How to run
+```
+python -m venv .venv
+.venv\Scripts\activate
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install fastapi uvicorn python-multipart pillow pytest httpx numpy
+uvicorn app:app --reload
+```
+Open http://127.0.0.1:8000/docs and use "Try it out".
+
+## Settings changed for my project
+- `POSITIVE = 'battery'`
+- `URGENT = battery, batteries, leak, leaking, acid, hazardous, fire, smoke, swollen, sharp, broken glass`
+- `MODEL_PATH = week6_model.pt`
+- Added email masking and a weight pattern in `PATTERNS` (from Week 7).
+
+## API usage
+| Endpoint | Input | Output |
+|---|---|---|
+| `GET /health` | none | status, model_loaded, 12 classes, positive class |
+| `POST /predict` | image (JPEG/PNG, max 5 MB) | label, probabilities, latency_ms |
+| `POST /analyze` | image + text note (max 2,000 chars) | prediction, masked note, fields, urgent terms, decision, reasons |
+
+```
+curl -X POST http://127.0.0.1:8000/predict -F "file=@sample.jpeg;type=image/jpeg"
+
+curl -X POST http://127.0.0.1:8000/analyze ^
+     -F "file=@sample.jpeg;type=image/jpeg" ^
+     -F "note=Old batteries, swollen and leaking acid. Call 0312-5558899, CNIC 35202-1234567-1"
+```
+Result: `/predict` on my battery sample returned `label: battery` with P(battery) about 0.93.
+`/analyze` returned the note with `[PHONE]` and `[CNIC]` in place of the real numbers,
+urgent terms (batteries, leaking, acid, swollen) and `decision: REFER`.
+The phone number and CNIC do not appear anywhere in the response.
+
+Error codes: 415 wrong file type, 413 file over 5 MB, 400 unreadable image, 422 missing file or note too long,
+401 missing API key (only when `API_KEY` is set).
+
+## Test results
+```
+pytest -q test_api.py
+........                                                                 [100%]
+8 passed, 1 warning in 11.77s
+```
+Tests cover: health, response schema and probabilities summing to 1, parity with calling the model directly,
+wrong file type (415), too-large file (413), corrupt image (400), missing file (422), and PII masking.
+The warning is only an httpx deprecation notice from Starlette's test client.
+
+## Latency and capacity
+Hardware: Intel Core i5-6200U @ 2.30 GHz (2 cores, 4 threads), 8 GB RAM, Windows, CPU-only PyTorch, one uvicorn worker.
+```
+python bench.py
+n=50  p50=70 ms  p95=97 ms  max=259 ms
+Throughput with 1 worker ~ 13.2 requests/s
+```
+The 259 ms maximum is most likely the first request while the server warms up.
+
+**Little's law:** one worker handles one request at a time, so rate = 1 / p50 = 1 / 0.070 s = 14.3 requests/s.
+Per day: 14.3 x 86,400 s is about **1.23 million requests/day** (86,400 / 0.070 = 1,234,286).
+The measured mean gives 13.2 req/s, about 1.14 million per day.
+
+## Bad input tried
+I sent `app.py` as the upload to `/predict` with content type `text/plain`. The API returned
+HTTP 415 `{"detail":"Upload a JPEG or PNG image"}`, with no crash and no stack trace.
+
+## Check Your Understanding
+1. **A client uploads a PDF to /predict. Which status code, and why not 500?**
+   415 Unsupported Media Type. The mistake is the client's, and 4xx codes mean a client error. A 500 means a bug in my server.
+   The API checks the content type before decoding, so a bad upload is rejected cleanly instead of crashing.
+2. **Why is the model loaded in lifespan, not inside the endpoint?**
+   Loading the checkpoint takes seconds and hundreds of MB of memory. In `lifespan` it happens once when the server starts.
+   Inside the endpoint, every request would reload it, making every call slow and wasting memory.
+3. **p50 = 40 ms and p95 = 400 ms: what does it tell you, and what do you check?**
+   A typical request is fast, but the slowest 5% are about 10 times slower. That is a tail-latency problem, so the average hides it.
+   I would check: queueing when requests overlap, blocking code in the event loop, cold starts, large images,
+   CPU contention from other programs, and the max value and per-request timings in the logs.
+4. **500,000 requests/day, peak 5 times the average, 25 requests/s per worker. How many workers?**
+   Average = 500,000 / 86,400 = 5.8 req/s. Peak = 5 x 5.8 = 28.9 req/s.
+   Workers = 28.9 / 25 = 1.16, rounded up to **2 workers**. I would use 3 for headroom.
+5. **Why can model inference inside an `async def` endpoint slow other requests?**
+   An async endpoint runs on the single event loop. Heavy CPU work like inference does not yield,
+   so it blocks the loop and every other request waits, even `/health`. Using `run_in_threadpool` moves the work
+   to a worker thread so the loop stays free.
+6. **How many communication channels does a 4-person team have?**
+   n(n-1)/2 = 4 x 3 / 2 = **6 channels**.
+
+## Reflection
+Serving the model showed that a good test score is not enough. Preprocessing must match training (the parity test),
+bad input must fail safely (415, 413, 400, 422), and personal data must be masked before anything is returned.
+The p50 of 70 ms and about 1.2 million requests per day per worker are enough for a recycling-collection use case on a laptop.
+Limits: the model was trained on web photos, so real-world lighting and clutter may lower accuracy,
+and the output is decision support only; a human decides.
