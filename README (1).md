@@ -115,14 +115,6 @@ Personal identifiers are masked **before** any entity or field extraction, becau
 ### Limitations
 My held-out NER set has only **15 entities**, so one entity moves F1 by several points. The case records use **two examples** with notes I wrote, the OCR test image is **clean and synthetic**, and I did not check whether the example photos were in my Week 6 test set. This is **decision support only**, and a person decides.
 
-### Instructor feedback on Week 7 (Dr. Faiz Ahmad): 9.6 / 10
-**Strengths:** every result was measured and matched my outputs. I reported spam precision and recall for both models, honestly showed that both missed my Roman Urdu spam, scored my recycling gold set on held-out sentences (F1 0.400 to 0.593), built weight, plate and batch regex fields with negative tests and a before-and-after fix, and made a battery case record from my own Week 6 model with a real disagreement case.
-
-**To improve (not done yet, my plan):**
-1. **Keep the provided NER set unchanged.** I changed the names in the six provided sentences, so my F1 (0.467 → 0.812) cannot be compared with the shared reference (0.533 → 0.875). Next time the provided set stays as given, and my own names go only in my domain set.
-2. **Test OCR on real errors.** My synthetic invoice gave CER 0.000, so the correction rules never met real mistakes. I should repeat the OCR step on a degraded image or a photo of a real recycling receipt.
-
----
 
 ## Lab 8: Recycling Waste Sorting API (Vision + Text)
 
