@@ -7,7 +7,7 @@
 ![Macro-F1](https://img.shields.io/badge/macro--F1-0.928-blue)
 ![Latency](https://img.shields.io/badge/p50-70%20ms-orange)
 
-**Muhammad Luqman Khan** | Introduction to Applied AI | BS 8th Semester, Department of Electronics
+**Muhammad Luqman Khan** | Introduction to Applied AI | BS 7th Semester, Department of Electronics
 
 > An image model that sorts household waste into 12 classes, a text layer that reads notes and masks personal data,
 > and a tested web API that serves both. Decision support only; a person decides.
@@ -168,6 +168,21 @@ the OCR test image is **clean and synthetic**, and I did not check whether the e
 A FastAPI web service that serves the Week 6 image model and the Week 7 text evidence.
 The positive class that must not be missed is **battery** (hazardous waste).
 
+### 🔗 Live demo
+
+**Local demo link:** http://127.0.0.1:8000/docs
+
+**Status:** ⚪ Runs locally only. This link is **not** a public website.
+
+**It will work when:**
+1. the server is running on my own computer (`uvicorn app:app` in the project folder), and
+2. the page is opened in a browser on that same computer.
+
+If the server is stopped, or the link is opened on a different device (including from GitHub), the page will not load.
+To try it yourself, follow the Quick start below and open the link.
+
+I verified the demo on 6 November 2026: `/health`, `/predict` and `/analyze` all returned 200 and the 415 error case worked.
+
 ### ✨ Features
 - **Three endpoints** with typed request and response schemas (auto-generated docs at `/docs`)
 - **Model loaded once** at startup (`lifespan`), not on every request
@@ -206,8 +221,9 @@ curl -X POST http://127.0.0.1:8000/analyze ^
 ### What I saw
 - `/health`: `model_loaded: true`, all 12 classes, `positive: battery`.
 - `/predict` on my battery photo: `label: battery`, P(battery) about **0.93**.
-- `/analyze`: the note came back with **`[PHONE]`** and **`[CNIC]`**, the urgent terms (batteries, leaking, acid, swollen) were found,
+- `/analyze`: the note came back with **`[PHONE]`** and **`[CNIC]`**, urgent terms such as batteries, leaking, acid and swollen were found,
   and `decision` was **`REFER`**. The phone number and CNIC do not appear anywhere in the response.
+- A 6 MB fake image sent to `/predict` returned **413** (`Image larger than 5 MB`).
 
 ### Settings changed for my project
 | Setting | Value |
