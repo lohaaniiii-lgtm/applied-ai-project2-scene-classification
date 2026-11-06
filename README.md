@@ -114,8 +114,7 @@ My held-out NER set has only **15 entities**, so one entity moves F1 by several 
 
 
 # Project 2: Recycling Waste Sorting API (Vision + Text)
-
-**Student:** Muhammad Luqman Khan | **Course:** Introduction to Applied AI (Lab 8)
+http://127.0.0.1:8000/docs#/default/analyze_analyze_post
 
 A FastAPI web service that serves my Week 6 image model (ResNet-18, 12 waste classes, macro-F1 0.928)
 and my Week 7 text evidence (PII masking, field extraction, urgent-word detection).
